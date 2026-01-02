@@ -31,12 +31,13 @@ app.use(express.urlencoded({ extended: true }));  // Parse URL-encoded bodies
 /**
  * Connect to MongoDB Atlas database
  * Uses MONGODB_URI environment variable for connection string
+ * This function is called AFTER the server starts listening
  */
 const connectDB = async () => {
   try {
     // Check if MONGODB_URI is defined
     if (!process.env.MONGODB_URI) {
-      throw new Error('MONGODB_URI environment variable is not defined. Please set it in Railway/Render dashboard.');
+      throw new Error('MONGODB_URI environment variable is not defined. Please set it in Railway/Render dashboard or .env file.');
     }
 
     // Log that connection is being attempted (without exposing credentials)
@@ -52,7 +53,7 @@ const connectDB = async () => {
   } catch (error) {
     console.error('❌ MongoDB Connection Error:', error.message);
     console.error('💡 Make sure to set MONGODB_URI environment variable in Railway/Render dashboard');
-    process.exit(1);  // Exit process with failure
+    // Don't exit process - let server continue running for health checks
   }
 };
 
@@ -104,15 +105,12 @@ app.use((req, res) => {
 // ========================================
 const PORT = process.env.PORT || 5000;
 
-// Connect to database first, then start the server
-connectDB()
-  .then(() => {
-    app.listen(PORT, () => {
-      console.log(`🚀 Server is running on port ${PORT}`);
-      console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
-    });
-  })
-  .catch((error) => {
-    console.error('Failed to start server:', error.message);
-    process.exit(1);
-  });
+// Start server first, then connect to MongoDB (Railway-compatible approach)
+app.listen(PORT, () => {
+  console.log(`🚀 Server is running on port ${PORT}`);
+  console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log('⏳ Server started successfully, now connecting to MongoDB...');
+  
+  // Connect to MongoDB after server starts (prevents build-time connection issues)
+  connectDB();
+});
