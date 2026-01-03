@@ -21,7 +21,16 @@ const app = express();
 // ========================================
 // MIDDLEWARE CONFIGURATION
 // ========================================
-app.use(cors());  // Enable CORS for frontend communication
+// Configure CORS to allow requests from frontend
+app.use(cors({
+  origin: [
+    'http://localhost:5173',  // Local development
+    'https://your-frontend.vercel.app'  // Production - Replace with your actual Vercel URL
+  ],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json());  // Parse JSON request bodies
 app.use(express.urlencoded({ extended: true }));  // Parse URL-encoded bodies
 
